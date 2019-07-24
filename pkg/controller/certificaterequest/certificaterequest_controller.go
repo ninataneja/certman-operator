@@ -235,6 +235,9 @@ func (r *ReconcileCertificateRequest) Reconcile(request reconcile.Request) (reco
 		reqLogger.Error(err, err.Error())
 	}
 
+	//testing for certificate check
+	r.CertificateComparison(reqLogger, cr)
+
 	// reqLogger.Info("Skip reconcile as valid certificates exist", "Secret.Namespace", found.Namespace, "Secret.Name", found.Name)
 	return reconcile.Result{}, nil
 }
