@@ -87,3 +87,5 @@ tags
 *.iml
 
 *.log
+
+cmd/manager/__debug_bin
