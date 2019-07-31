@@ -26,6 +26,8 @@ import (
 
 	"github.com/eggsampler/acme"
 	"github.com/go-logr/logr"
+	"github.com/openshift/certman-operator/pkg/localmetrics"
+	"github.com/prometheus/client_golang/prometheus"
 
 	certmanv1alpha1 "github.com/openshift/certman-operator/pkg/apis/certman/v1alpha1"
 	"github.com/openshift/certman-operator/pkg/controller/controllerutils"
@@ -34,6 +36,11 @@ import (
 )
 
 func (r *ReconcileCertificateRequest) IssueCertificate(reqLogger logr.Logger, cr *certmanv1alpha1.CertificateRequest, certificateSecret *corev1.Secret) error {
+	reqLogger.Info("STARTING TIMER!!!!!")
+	timer := prometheus.NewTimer(localmetrics.MetricIssueCertificateDuration)
+	reqLogger.Info("TIMER STARTED")
+	defer localmetrics.UpdateCertificateCreationDurationMetric(timer.ObserveDuration())
+	defer reqLogger.Info("timer OVER!!!!! time recorded")
 	proceed, err := r.ValidateDnsWriteAccess(reqLogger, cr)
 	if err != nil {
 		return err

@@ -41,6 +41,10 @@ var (
 		Name: "certman_operator_duplicate_certs_in_last_week",
 		Help: "Report how many certs have had duplicate issues",
 	}, []string{"name"})
+	MetricIssueCertificateDuration = prometheus.NewSummary(prometheus.SummaryOpts{
+		Name: "certificate_creation_duration",
+		Help: "Runtime of issue certificate in minutes",
+	})
 
 	MetricsList = []prometheus.Collector{
 		MetricCertsIssuedInLastDayOpenshiftCom,
@@ -48,6 +52,8 @@ var (
 		MetricCertsIssuedInLastWeekOpenshiftCom,
 		MetricCertsIssuedInLastWeekOpenshiftAppsCom,
 		MetricDuplicateCertsIssuedInLastWeek,
+		MetricIssueCertificateDuration,
+		//add metric
 	}
 )
 
@@ -87,4 +93,9 @@ func UpdateMetrics(hour int) {
 		UpdateCertsIssuedInLastWeekGuage()
 		UpdateDuplicateCertsIssuedInLastWeek()
 	}
+}
+
+func UpdateCertificateCreationDurationMetric(time time.Duration) {
+	//metric = time
+	MetricIssueCertificateDuration.Observe(float64(time))
 }
