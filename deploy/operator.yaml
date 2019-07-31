@@ -15,7 +15,7 @@ spec:
       serviceAccountName: certman-operator
       containers:
         - name: certman-operator
-          image: quay.io/app-sre/certman-operator
+          image: quay.io/ntaneja/certman-operator:adding_metrics_for_prometheus_alerts
           command:
           - certman-operator
           imagePullPolicy: Always
