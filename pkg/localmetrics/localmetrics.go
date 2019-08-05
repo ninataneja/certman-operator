@@ -15,6 +15,7 @@
 package localmetrics
 
 import (
+	"math/big"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -46,6 +47,10 @@ var (
 		Help:        "Runtime of issue certificate function in seconds",
 		ConstLabels: prometheus.Labels{"name": "certman-operator"},
 	})
+	MetricCertsExpiringSoon = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		Name: "certman_operator_certificate_expiring",
+		Help: "Report 1 if certificate expires in the next 15 days with corresponding cluster name",
+	}, []string{"name"})
 
 	MetricsList = []prometheus.Collector{
 		MetricCertsIssuedInLastDayOpenshiftCom,
@@ -54,6 +59,7 @@ var (
 		MetricCertsIssuedInLastWeekOpenshiftAppsCom,
 		MetricDuplicateCertsIssuedInLastWeek,
 		MetricIssueCertificateDuration,
+		MetricCertsExpiringSoon,
 	}
 )
 
@@ -97,4 +103,10 @@ func UpdateMetrics(hour int) {
 
 func UpdateCertificateIssueDurationMetric(time time.Duration) {
 	MetricIssueCertificateDuration.Observe(float64(time.Seconds()))
+}
+
+//Populates the metric for certificate expiry with a 1 if the certificate is expiring in the next 15 days, or a 0 if not
+//labels for the certificate name and corresponding cluster web URL
+func UpdateCertExpiryDateMetric(clusterNameURL string, certSerialNum *big.Int, expiryVal int) {
+	MetricCertsExpiringSoon.With(prometheus.Labels{"name": "certman-operator", "clusterURL": clusterNameURL, "certificiate-serial-num": certSerialNum.String()}).Set(float64(expiryVal))
 }
