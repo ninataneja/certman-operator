@@ -1,0 +1,4 @@
+oc project certman-operator
+oc delete deployment --all
+oc delete pods --all
+oc apply -f operator.yaml

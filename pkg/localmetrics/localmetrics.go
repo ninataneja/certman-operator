@@ -15,9 +15,10 @@
 package localmetrics
 
 import (
-	"math/big"
+	"fmt"
 	"time"
 
+	"github.com/go-logr/logr"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -50,7 +51,7 @@ var (
 	MetricCertificateDaysUntilExpiration = prometheus.NewGaugeVec(prometheus.GaugeOpts{
 		Name: "certman_operator_certificate_days_valid_until_expiration",
 		Help: "Report the number of days until a certificate expires with the certificate serial number and corresponding cluster name",
-	}, []string{"name"})
+	}, []string{"name", "certificate-request-name", "cluster-name"})
 
 	MetricsList = []prometheus.Collector{
 		MetricCertsIssuedInLastDayOpenshiftCom,
@@ -106,6 +107,8 @@ func UpdateCertificateIssueDurationMetric(time time.Duration) {
 }
 
 //Sets gauge metric for certificate expiry with certificate serial number, the days until expiry, and corresponding cluster name
-func UpdateCertExpiryDateMetric(clusterNameURL string, certSerialNum *big.Int, daysCertValidFor int) {
-	MetricCertificateDaysUntilExpiration.With(prometheus.Labels{"name": "certman-operator", "clusterURL": clusterNameURL, "certificate-serial-num": certSerialNum.String()}).Set(float64(daysCertValidFor))
+func UpdateCertExpiryDateMetric(reqLogger logr.Logger, certReqName string, clusterName string, daysCertValidFor int) {
+	reqLogger.Info("CALLING THE FUNCTION FOR THE EXPIRATION!!!!!")
+	reqLogger.Info(fmt.Sprintf("request name %v, clustername: %v, days valid for: %d", certReqName, clusterName, daysCertValidFor))
+	MetricCertificateDaysUntilExpiration.With(prometheus.Labels{"name": "certman-operator", "certificate-request-name": certReqName, "cluster-name": clusterName}).Set(float64(daysCertValidFor))
 }

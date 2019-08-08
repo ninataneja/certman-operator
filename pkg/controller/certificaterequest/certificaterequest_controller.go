@@ -18,13 +18,13 @@ package certificaterequest
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/go-logr/logr"
 
 	certmanv1alpha1 "github.com/openshift/certman-operator/pkg/apis/certman/v1alpha1"
 	"github.com/openshift/certman-operator/pkg/awsclient"
 	"github.com/openshift/certman-operator/pkg/controller/controllerutils"
+	"github.com/openshift/certman-operator/pkg/localmetrics"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -100,6 +100,7 @@ func (r *ReconcileCertificateRequest) Reconcile(request reconcile.Request) (reco
 	// Fetch the CertificateRequest cr
 	cr := &certmanv1alpha1.CertificateRequest{}
 
+	reqLogger.Info("WORKING!111111")
 	err := r.client.Get(context.TODO(), request.NamespacedName, cr)
 	if err != nil {
 		if errors.IsNotFound(err) {
@@ -112,6 +113,8 @@ func (r *ReconcileCertificateRequest) Reconcile(request reconcile.Request) (reco
 		reqLogger.Error(err, err.Error())
 		return reconcile.Result{}, err
 	}
+
+	reqLogger.Info("WORKING!2")
 
 	// Check if CertificateResource has been deleted
 	if cr.DeletionTimestamp.IsZero() {
@@ -144,6 +147,8 @@ func (r *ReconcileCertificateRequest) Reconcile(request reconcile.Request) (reco
 		return reconcile.Result{}, nil
 	}
 
+	reqLogger.Info("WORKING!3")
+
 	certificateSecret := newSecret(cr)
 
 	// Set CertificateRequest cr as the owner and controller
@@ -154,61 +159,70 @@ func (r *ReconcileCertificateRequest) Reconcile(request reconcile.Request) (reco
 
 	found := &corev1.Secret{}
 
+	reqLogger.Info("WORKING!4")
+
 	err = r.client.Get(context.TODO(), types.NamespacedName{Name: certificateSecret.Name, Namespace: certificateSecret.Namespace}, found)
 
-	// Issue New Certifcates
-	if err != nil && errors.IsNotFound(err) {
+	// // Issue New Certifcates
+	// if err != nil && errors.IsNotFound(err) {
 
-		reqLogger.Info("requesting new certificates as secret was not found")
+	// 	reqLogger.Info("requesting new certificates as secret was not found")
 
-		err := r.IssueCertificate(reqLogger, cr, certificateSecret)
-		if err != nil {
-			updateErr := r.updateStatusError(reqLogger, cr, err)
-			if updateErr != nil {
-				reqLogger.Error(updateErr, updateErr.Error())
-			}
-			reqLogger.Error(err, err.Error())
-			return reconcile.Result{}, err
-		}
+	// 	err := r.IssueCertificate(reqLogger, cr, certificateSecret)
+	// 	if err != nil {
+	// 		updateErr := r.updateStatusError(reqLogger, cr, err)
+	// 		if updateErr != nil {
+	// 			reqLogger.Error(updateErr, updateErr.Error())
+	// 		}
+	// 		reqLogger.Error(err, err.Error())
+	// 		return reconcile.Result{}, err
+	// 	}
+	// 	reqLogger.Info("WORKING!5")
 
-		reqLogger.Info("creating secret with certificates")
+	// 	reqLogger.Info("creating secret with certificates")
 
-		err = r.client.Create(context.TODO(), certificateSecret)
-		if err != nil {
-			if errors.IsAlreadyExists(err) {
-				reqLogger.Info("secret already exists. will update the existing secret with new certificates")
-				err = r.client.Update(context.TODO(), certificateSecret)
-				if err != nil {
-					reqLogger.Error(err, err.Error())
-					return reconcile.Result{}, err
-				}
-			} else {
-				reqLogger.Error(err, err.Error())
-				return reconcile.Result{}, err
-			}
-		}
+	// 	err = r.client.Create(context.TODO(), certificateSecret)
+	// 	if err != nil {
+	// 		if errors.IsAlreadyExists(err) {
+	// 			reqLogger.Info("secret already exists. will update the existing secret with new certificates")
+	// 			err = r.client.Update(context.TODO(), certificateSecret)
+	// 			if err != nil {
+	// 				reqLogger.Error(err, err.Error())
+	// 				return reconcile.Result{}, err
+	// 			}
+	// 		} else {
+	// 			reqLogger.Error(err, err.Error())
+	// 			return reconcile.Result{}, err
+	// 		}
+	// 	}
+	// 	reqLogger.Info("WORKING!6")
 
-		reqLogger.Info("updating certificate request status")
-		err = r.updateStatus(reqLogger, cr)
-		if err != nil {
-			reqLogger.Error(err, "could not update the status of the CertificateRequest")
-		}
+	// 	reqLogger.Info("updating certificate request status")
+	// 	err = r.updateStatus(reqLogger, cr)
+	// 	if err != nil {
+	// 		reqLogger.Error(err, "could not update the status of the CertificateRequest")
+	// 	}
 
-		reqLogger.Info(fmt.Sprintf("certificates issued and stored in secret %s/%s", certificateSecret.Namespace, certificateSecret.Name))
-		return reconcile.Result{}, nil
-	} else if err != nil {
-		reqLogger.Error(err, err.Error())
-		return reconcile.Result{}, err
-	}
+	// 	reqLogger.Info(fmt.Sprintf("certificates issued and stored in secret %s/%s", certificateSecret.Namespace, certificateSecret.Name))
+	// 	return reconcile.Result{}, nil
+	// } else if err != nil {
+	// 	reqLogger.Error(err, err.Error())
+	// 	return reconcile.Result{}, err
+	// }
+	reqLogger.Info("WORKING!7")
 
 	reqLogger.Info("checking if certificates need to be renewed or reissued")
 
 	// Renew Certificates
+	reqLogger.Info("WORKING!CALLING RENEW FUNCTION!!!!!!")
+	localmetrics.UpdateCertExpiryDateMetric(reqLogger, cr.Name, cr.Spec.ACMEDNSDomain, -3)
 	shouldRenewOrReIssue, err := r.ShouldRenewOrReIssue(reqLogger, cr)
 	if err != nil {
 		reqLogger.Error(err, err.Error())
 		return reconcile.Result{}, err
 	}
+
+	reqLogger.Info("CALLED RENEW FUNCTION")
 
 	if shouldRenewOrReIssue {
 		err := r.IssueCertificate(reqLogger, cr, found)

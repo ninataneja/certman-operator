@@ -15,7 +15,7 @@ spec:
       serviceAccountName: certman-operator
       containers:
         - name: certman-operator
-          image: quay.io/app-sre/certman-operator
+          image: quay.io/ntaneja/certman-operator:v9
           command:
           - certman-operator
           imagePullPolicy: Always
