@@ -11,6 +11,7 @@ import (
 	hivev1alpha1 "github.com/openshift/hive/pkg/apis/hive/v1alpha1"
 	"github.com/operator-framework/operator-sdk/pkg/leader"
 	"github.com/operator-framework/operator-sdk/pkg/log/zap"
+	"github.com/prometheus/client_golang/prometheus"
 
 	routev1 "github.com/openshift/api/route/v1"
 	sdkVersion "github.com/operator-framework/operator-sdk/version"
@@ -128,6 +129,8 @@ func main() {
 	if err := metrics.ConfigureMetrics(context.TODO(), *metricsServer); err != nil {
 		log.Error(err, "Failed to configure Metrics")
 	}
+
+	localmetrics.MetricCertificateDaysUntilExpiration.With(prometheus.Labels{"name": "certman-operator", "certificate-request-name": "fakeCRName", "cluster-name": "fakeClusterName"}).Set(float64(2))
 
 	go localmetrics.UpdateMetrics(hours)
 	log.Info("Starting the Cmd.")
